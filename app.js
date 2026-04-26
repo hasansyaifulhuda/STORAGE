@@ -1,158 +1,137 @@
 import { supabase } from './supabaseClient.js'
 
-// ======================
-// CONFIG
-// ======================
 const ADMIN_KEY = "123"
 const BUCKET = "files"
+const MAX_FILES = 5
+const MAX_SIZE = 10 * 1024 * 1024
 
-// ======================
-// ROLE SYSTEM (FINAL FIX)
-// ======================
-const url = new URL(window.location.href)
-const key = url.searchParams.get("key")
+const params = new URLSearchParams(window.location.search)
+const key = params.get("key")
+const isAdmin = key === ADMIN_KEY
 
-let isAdmin = false
+const adminPanel = document.getElementById("adminPanel")
+if (!isAdmin) adminPanel.style.display = "none"
 
-// hanya admin kalau key EXACT
-if (key === ADMIN_KEY) {
-  isAdmin = true
-} else {
-  // hapus key kalau tidak valid / biar tidak nyangkut
-  if (url.searchParams.has("key")) {
-    url.searchParams.delete("key")
-    window.history.replaceState({}, '', url.pathname)
-  }
-}
-
-// DEBUG (optional)
-console.log("URL:", window.location.href)
-console.log("KEY:", key)
-console.log("IS ADMIN:", isAdmin)
-
-// ======================
-// UI SETUP
-// ======================
-const roleText = document.getElementById("roleText")
-const uploadSection = document.getElementById("uploadSection")
-
-if (isAdmin) {
-  roleText.innerText = "Mode: ADMIN"
-} else {
-  roleText.innerText = "Mode: GUEST"
-  uploadSection.style.display = "none"
-}
-
-// ======================
-// STATE
-// ======================
 let currentPath = ""
 
-// ======================
-// UPLOAD
-// ======================
-document.getElementById("uploadBtn")?.addEventListener("click", uploadFile)
+// SEARCH
+document.getElementById("searchInput").addEventListener("input", e => {
+  loadFiles(currentPath, e.target.value)
+})
 
-async function uploadFile() {
-  const file = document.getElementById("fileInput").files[0]
-  const folder = document.getElementById("folderInput").value.trim()
-
-  if (!file) return alert("Pilih file!")
-
-  const path = folder
-    ? `${currentPath}${folder}/${file.name}`
-    : `${currentPath}${file.name}`
-
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, file, { upsert: true })
-
-  if (error) {
-    console.error(error)
-    return alert("Upload gagal")
-  }
-
-  alert("Upload berhasil")
-  loadFiles(currentPath)
+// FILE ICON
+function getFileIcon(name) {
+  const ext = name.split('.').pop()
+  if (["png","jpg"].includes(ext)) return "🖼️"
+  if (["pdf"].includes(ext)) return "📕"
+  if (["zip"].includes(ext)) return "🗜️"
+  return "📄"
 }
 
-// ======================
 // LOAD FILES
-// ======================
-async function loadFiles(path = "") {
+async function loadFiles(path = "", search = "") {
   currentPath = path
 
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .list(path, { limit: 100 })
+  const { data } = await supabase.storage.from(BUCKET).list(path)
 
-  if (error) {
-    console.error(error)
-    return
-  }
-
+  let total = 0
   const list = document.getElementById("fileList")
   list.innerHTML = ""
 
-  document.getElementById("backBtn").style.display =
-    path ? "block" : "none"
-
   data.forEach(item => {
-    const li = document.createElement("li")
+    if (!item.name.includes(search)) return
 
-    if (item.id === null) {
-      // 📁 Folder
-      li.innerHTML = `📁 ${item.name}`
-      li.onclick = () => loadFiles(path + item.name + "/")
-    } else {
-      // 📄 File
-      const fullPath = path + item.name
+    const size = item.metadata?.size || 0
+    total += size
 
-      const { data: urlData } = supabase.storage
-        .from(BUCKET)
-        .getPublicUrl(fullPath)
+    const div = document.createElement("div")
+    div.className = "file-item"
 
-      li.innerHTML = `
-        📄 <a href="${urlData.publicUrl}" target="_blank">${item.name}</a>
-        ${isAdmin ? `<button onclick="deleteFile('${fullPath}')">🗑️</button>` : ""}
-      `
-    }
+    const fullPath = path + item.name
+    const { data: url } = supabase.storage.from(BUCKET).getPublicUrl(fullPath)
 
-    list.appendChild(li)
+    div.innerHTML = `
+      ${getFileIcon(item.name)} ${item.name}
+      (${(size/1024).toFixed(1)} KB)
+      ${!isAdmin ? `<a href="${url.publicUrl}" download>⬇️</a>` : ""}
+    `
+    list.appendChild(div)
   })
+
+  if (isAdmin) {
+    document.getElementById("storageInfo").innerText =
+      "Total: " + (total / (1024*1024)).toFixed(2) + " MB"
+  }
 }
 
-// ======================
-// BACK BUTTON
-// ======================
-document.getElementById("backBtn").onclick = () => {
-  const parts = currentPath.split("/").filter(Boolean)
-  parts.pop()
-  const newPath = parts.length ? parts.join("/") + "/" : ""
-  loadFiles(newPath)
-}
+// MULTI UPLOAD
+document.getElementById("uploadBtn").onclick = async () => {
+  const files = document.getElementById("fileInput").files
 
-// ======================
-// DELETE
-// ======================
-window.deleteFile = async function(path) {
-  if (!isAdmin) return
+  if (files.length > MAX_FILES) return alert("Max 5 file")
 
-  if (!confirm("Hapus file ini?")) return
+  const tasks = []
 
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .remove([path])
+  for (let file of files) {
+    if (file.size > MAX_SIZE) continue
 
-  if (error) {
-    console.error(error)
-    return alert("Gagal hapus")
+    const item = createUploadUI(file.name)
+    tasks.push(uploadFile(file, item))
   }
 
+  await Promise.all(tasks)
   loadFiles(currentPath)
 }
 
-// ======================
+// UPLOAD UI
+function createUploadUI(name) {
+  const list = document.getElementById("uploadList")
+  const div = document.createElement("div")
+  div.className = "upload-item"
+
+  const fill = document.createElement("div")
+  fill.className = "upload-fill"
+
+  div.innerHTML = name
+  div.appendChild(fill)
+  list.appendChild(div)
+
+  return fill
+}
+
+// UPLOAD
+async function uploadFile(file, fill) {
+  let progress = 0
+  const interval = setInterval(() => {
+    progress += 10
+    if (progress < 90) fill.style.width = progress + "%"
+  }, 200)
+
+  await supabase.storage.from(BUCKET).upload(file.name, file, { upsert: true })
+
+  clearInterval(interval)
+  fill.style.width = "100%"
+}
+
+// DRAG DROP
+const dropZone = document.getElementById("dropZone")
+
+dropZone.ondrop = e => {
+  e.preventDefault()
+  handleDrop(e.dataTransfer.files)
+}
+
+dropZone.ondragover = e => e.preventDefault()
+
+async function handleDrop(files) {
+  const tasks = []
+  for (let file of files) {
+    const ui = createUploadUI(file.name)
+    tasks.push(uploadFile(file, ui))
+  }
+  await Promise.all(tasks)
+  loadFiles()
+}
+
 // INIT
-// ======================
 loadFiles()

@@ -7,25 +7,43 @@
 </head>
 <body>
 
-  <h1>📦 Web Storage</h1>
-  <p id="roleText"></p>
+<div class="header">
+  <div class="title">☁️ Web Storage</div>
+  <input type="text" id="searchInput" class="search" placeholder="Search file...">
+</div>
 
-  <!-- ADMIN ONLY -->
-  <div id="uploadSection">
+<div class="container">
+
+  <!-- ADMIN -->
+  <div class="card" id="adminPanel">
     <input type="text" id="folderInput" placeholder="Folder (opsional)">
-    <br><br>
-    <input type="file" id="fileInput">
+    <input type="file" id="fileInput" multiple>
     <button id="uploadBtn">Upload</button>
+
+    <div id="dropZone" class="drop-zone">
+      Drag & Drop file di sini
+    </div>
   </div>
 
-  <hr>
+  <!-- STORAGE INFO -->
+  <div class="card">
+    <b id="storageInfo"></b>
+  </div>
 
-  <button id="backBtn" style="display:none;">⬅️ Back</button>
+  <!-- UPLOAD PROGRESS -->
+  <div class="card">
+    <h3>Upload Progress</h3>
+    <div id="uploadList"></div>
+  </div>
 
-  <h2>Daftar File</h2>
-  <ul id="fileList"></ul>
+  <!-- FILE LIST -->
+  <div class="card">
+    <button id="backBtn" style="display:none;">⬅️ Back</button>
+    <div id="fileList"></div>
+  </div>
 
-  <script type="module" src="app.js"></script>
+</div>
+
+<script type="module" src="app.js"></script>
 </body>
-</html>
 </html>
