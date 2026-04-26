@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient.js'
 
 // ======================
-// ROLE
+// ROLE (ANTI FLASH)
 // ======================
 const ADMIN_KEY = "123"
 const params = new URLSearchParams(window.location.search)
@@ -17,38 +17,41 @@ let currentPath = ""
 // ======================
 // SEARCH
 // ======================
-document.getElementById("searchInput").oninput = (e) => {
-  loadFiles(currentPath, e.target.value.toLowerCase())
-}
+const searchInput = document.getElementById("searchInput")
+searchInput.addEventListener("input", () => {
+  loadFiles(currentPath, searchInput.value.toLowerCase())
+})
 
 // ======================
-// ICON
+// ICON FILE
 // ======================
 function getFileIcon(name) {
   const ext = name.split('.').pop().toLowerCase()
 
-  if (["png","jpg","jpeg"].includes(ext)) return "🖼️"
+  if (["png","jpg","jpeg","gif"].includes(ext)) return "🖼️"
   if (["pdf"].includes(ext)) return "📕"
   if (["zip","rar"].includes(ext)) return "🗜️"
+  if (["mp4","mp3"].includes(ext)) return "🎬"
   if (["html","js","css"].includes(ext)) return "💻"
 
   return "📄"
 }
 
 // ======================
-// LOAD FILE
+// LOAD FILE (FOLDER + SEARCH)
 // ======================
 async function loadFiles(path = "", search = "") {
   currentPath = path
 
-  // NAV PATH
-  document.getElementById("navPath").innerText = "/" + path
-
-  // BACK BUTTON
   const backBtn = document.getElementById("backBtn")
   backBtn.style.display = path ? "inline-block" : "none"
 
-  const { data } = await supabase.storage.from(BUCKET).list(path)
+  const { data, error } = await supabase.storage.from(BUCKET).list(path)
+
+  if (error) {
+    console.error(error)
+    return
+  }
 
   const list = document.getElementById("fileList")
   list.innerHTML = ""
@@ -72,7 +75,6 @@ async function loadFiles(path = "", search = "") {
           📁 <b>${item.name}</b>
         </div>
       `
-
       div.onclick = () => loadFiles(path + item.name + "/")
     }
 
@@ -113,18 +115,20 @@ async function loadFiles(path = "", search = "") {
     list.appendChild(div)
   })
 
+  // EMPTY STATE
   if (list.innerHTML === "") {
     list.innerHTML = `<div style="color:gray">Tidak ada file</div>`
   }
 
+  // STORAGE INFO
   if (isAdmin) {
     document.getElementById("storageInfo").innerText =
-      "Total Storage: " + (total / (1024*1024)).toFixed(2) + " MB"
+      "Total Storage: " + (total / (1024 * 1024)).toFixed(2) + " MB"
   }
 }
 
 // ======================
-// BACK
+// BACK BUTTON (HEADER)
 // ======================
 document.getElementById("backBtn").onclick = () => {
   if (!currentPath) return
@@ -133,7 +137,6 @@ document.getElementById("backBtn").onclick = () => {
   parts.pop()
 
   const newPath = parts.length ? parts.join("/") + "/" : ""
-
   loadFiles(newPath)
 }
 
@@ -148,10 +151,12 @@ window.downloadFile = function(url) {
 }
 
 // ======================
-// UPLOAD
+// UPLOAD (ADMIN)
 // ======================
-document.getElementById("uploadBtn").onclick = async () => {
+document.getElementById("uploadBtn")?.addEventListener("click", async () => {
   const files = document.getElementById("fileInput").files
+  if (!files.length) return
+
   const tasks = []
 
   for (let file of files) {
@@ -161,7 +166,7 @@ document.getElementById("uploadBtn").onclick = async () => {
 
   await Promise.all(tasks)
   loadFiles(currentPath)
-}
+})
 
 // ======================
 // UI PROGRESS
@@ -191,7 +196,7 @@ function createUploadUI(name) {
 // UPLOAD CORE
 // ======================
 async function uploadFile(file, fill) {
-  const folder = document.getElementById("folderInput").value.trim()
+  const folder = document.getElementById("folderInput")?.value.trim()
 
   const path = folder
     ? `${currentPath}${folder}/${file.name}`
@@ -201,12 +206,23 @@ async function uploadFile(file, fill) {
 
   const interval = setInterval(() => {
     progress += Math.random() * 10
-    if (progress < 90) fill.style.width = progress + "%"
+    if (progress < 90) {
+      fill.style.width = progress + "%"
+    }
   }, 200)
 
-  await supabase.storage.from(BUCKET).upload(path, file, { upsert: true })
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, file, { upsert: true })
 
   clearInterval(interval)
+
+  if (error) {
+    fill.style.background = "red"
+    console.error(error)
+    return
+  }
+
   fill.style.width = "100%"
 }
 
@@ -219,16 +235,18 @@ window.deleteFile = async function(path) {
 }
 
 // ======================
-// DRAG DROP
+// DRAG & DROP (ADMIN)
 // ======================
 const dropZone = document.getElementById("dropZone")
 
-dropZone.ondrop = (e) => {
-  e.preventDefault()
-  handleDrop(e.dataTransfer.files)
-}
+if (dropZone) {
+  dropZone.ondrop = (e) => {
+    e.preventDefault()
+    handleDrop(e.dataTransfer.files)
+  }
 
-dropZone.ondragover = (e) => e.preventDefault()
+  dropZone.ondragover = (e) => e.preventDefault()
+}
 
 async function handleDrop(files) {
   const tasks = []

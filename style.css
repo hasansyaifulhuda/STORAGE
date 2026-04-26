@@ -123,3 +123,37 @@ button {
 .icon-btn:hover {
   transform: scale(1.1);
 }
+.header {
+  background: white;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.header .left {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.header .center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.header .right {
+  display: flex;
+}
+
+#backBtn {
+  background: #e2e8f0;
+  color: #0f172a;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+#backBtn:hover {
+  background: #cbd5e1;
+}
