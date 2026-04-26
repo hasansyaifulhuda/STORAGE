@@ -11,13 +11,11 @@ const BUCKET = "files"
 // ======================
 const path = window.location.pathname.toLowerCase()
 const params = new URLSearchParams(window.location.search)
-
 const key = params.get("key")
 
 let isAdmin = false
 
-// cek ada /admin DAN key benar
-if (path.includes("admin") && key === ADMIN_KEY) {
+if (key === "123") {
   isAdmin = true
 }
 
