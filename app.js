@@ -3,15 +3,22 @@ import { supabase } from './supabaseClient.js'
 // ======================
 // CONFIG
 // ======================
-const ADMIN_KEY = "abc123XYZ"
+const ADMIN_KEY = "123"
 const BUCKET = "files"
 
 // ======================
-// ROLE
+// ROLE SYSTEM (NEW)
 // ======================
+const path = window.location.pathname.toLowerCase()
 const params = new URLSearchParams(window.location.search)
+
 const key = params.get("key")
-const isAdmin = key === ADMIN_KEY
+
+let isAdmin = false
+
+if (path === "/admin" && key === ADMIN_KEY) {
+  isAdmin = true
+}
 
 // ======================
 // UI SETUP
