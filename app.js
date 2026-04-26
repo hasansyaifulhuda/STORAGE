@@ -28,11 +28,11 @@ searchInput.addEventListener("input", () => {
 function getFileIcon(name) {
   const ext = name.split('.').pop().toLowerCase()
 
-  if (["png","jpg","jpeg"].includes(ext)) return "🖼️"
+  if (["png","jpg","jpeg","gif"].includes(ext)) return "🖼️"
   if (["pdf"].includes(ext)) return "📕"
-  if (["zip","rar"].includes(ext)) return "🗜️"
+  if (["zip","rar"].includes(ext)) return "📦"
   if (["mp4","mp3"].includes(ext)) return "🎬"
-  if (["html","js","css"].includes(ext)) return "💻"
+  if (["html","js","css"].includes(ext)) return "📄"
 
   return "📄"
 }
@@ -92,7 +92,7 @@ async function loadFiles(path = "", search = "") {
 
         <div>
           ${!isAdmin ? `
-            <button class="icon-btn" onclick="downloadFile('${url.publicUrl}')">⬇️</button>
+            <button class="icon-btn" onclick="downloadFile('${url.publicUrl}')">📥</button>
           ` : ""}
 
           ${isAdmin ? `
