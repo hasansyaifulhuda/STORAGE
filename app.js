@@ -28,11 +28,11 @@ searchInput.addEventListener("input", () => {
 function getFileIcon(name) {
   const ext = name.split('.').pop().toLowerCase()
 
-  if (["png","jpg","jpeg","gif"].includes(ext)) return "🖼️"
+  if (["png","jpg","jpeg"].includes(ext)) return "🖼️"
   if (["pdf"].includes(ext)) return "📕"
-  if (["zip","rar"].includes(ext)) return "📦"
+  if (["zip","rar"].includes(ext)) return "🗜️"
   if (["mp4","mp3"].includes(ext)) return "🎬"
-  if (["html","js","css"].includes(ext)) return "📄"
+  if (["html","js","css"].includes(ext)) return "💻"
 
   return "📄"
 }
@@ -66,7 +66,6 @@ async function loadFiles(path = "", search = "") {
 
     const isFolder = !item.metadata
 
-    // ===== FOLDER =====
     if (isFolder) {
       div.innerHTML = `
         <div class="file-left">
@@ -74,10 +73,7 @@ async function loadFiles(path = "", search = "") {
         </div>
       `
       div.onclick = () => loadFiles(path + item.name + "/")
-    }
-
-    // ===== FILE =====
-    else {
+    } else {
       const size = item.metadata.size || 0
       total += size
 
@@ -96,9 +92,7 @@ async function loadFiles(path = "", search = "") {
 
         <div>
           ${!isAdmin ? `
-            <button class="icon-btn" onclick="downloadFile('${url.publicUrl}')">
-              📥
-            </button>
+            <button class="icon-btn" onclick="downloadFile('${url.publicUrl}')">⬇️</button>
           ` : ""}
 
           ${isAdmin ? `
@@ -113,6 +107,18 @@ async function loadFiles(path = "", search = "") {
 
   if (list.innerHTML === "") {
     list.innerHTML = `<div style="color:gray">Tidak ada file</div>`
+  }
+
+  // ======================
+  // TOTAL SIZE (ADMIN ONLY)
+  // ======================
+  const totalEl = document.getElementById("totalSize")
+
+  if (isAdmin) {
+    totalEl.style.display = "inline"
+    totalEl.innerText = (total / (1024 * 1024)).toFixed(2) + " MB"
+  } else {
+    totalEl.style.display = "none"
   }
 }
 
@@ -140,7 +146,7 @@ window.downloadFile = function(url) {
 }
 
 // ======================
-// UPLOAD CLICK
+// UPLOAD
 // ======================
 document.getElementById("uploadBtn")?.addEventListener("click", async () => {
   const files = document.getElementById("fileInput").files
@@ -182,7 +188,7 @@ function createUploadUI(name) {
 }
 
 // ======================
-// UPLOAD CORE (FIX FINAL)
+// UPLOAD CORE
 // ======================
 async function uploadFile(file, fill) {
   const folder = document.getElementById("folderInput")?.value.trim()
@@ -195,9 +201,7 @@ async function uploadFile(file, fill) {
 
   const interval = setInterval(() => {
     progress += Math.random() * 10
-    if (progress < 90) {
-      fill.style.width = progress + "%"
-    }
+    if (progress < 90) fill.style.width = progress + "%"
   }, 200)
 
   const { error } = await supabase.storage
@@ -214,7 +218,6 @@ async function uploadFile(file, fill) {
     return
   }
 
-  // ✅ SUCCESS
   fill.style.width = "100%"
   fill.style.background = "#22c55e"
 
