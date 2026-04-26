@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient.js'
 
 // ======================
-// ROLE (ANTI FLASH)
+// ROLE
 // ======================
 const ADMIN_KEY = "123"
 const params = new URLSearchParams(window.location.search)
@@ -23,7 +23,7 @@ searchInput.addEventListener("input", () => {
 })
 
 // ======================
-// ICON FILE
+// ICON
 // ======================
 function getFileIcon(name) {
   const ext = name.split('.').pop().toLowerCase()
@@ -38,7 +38,7 @@ function getFileIcon(name) {
 }
 
 // ======================
-// LOAD FILE (FOLDER + SEARCH)
+// LOAD FILE
 // ======================
 async function loadFiles(path = "", search = "") {
   currentPath = path
@@ -66,9 +66,7 @@ async function loadFiles(path = "", search = "") {
 
     const isFolder = !item.metadata
 
-    // ======================
-    // FOLDER
-    // ======================
+    // ===== FOLDER =====
     if (isFolder) {
       div.innerHTML = `
         <div class="file-left">
@@ -78,9 +76,7 @@ async function loadFiles(path = "", search = "") {
       div.onclick = () => loadFiles(path + item.name + "/")
     }
 
-    // ======================
-    // FILE
-    // ======================
+    // ===== FILE =====
     else {
       const size = item.metadata.size || 0
       total += size
@@ -101,7 +97,7 @@ async function loadFiles(path = "", search = "") {
         <div>
           ${!isAdmin ? `
             <button class="icon-btn" onclick="downloadFile('${url.publicUrl}')">
-              ⬇️
+              📥
             </button>
           ` : ""}
 
@@ -115,29 +111,13 @@ async function loadFiles(path = "", search = "") {
     list.appendChild(div)
   })
 
-  // EMPTY STATE
   if (list.innerHTML === "") {
     list.innerHTML = `<div style="color:gray">Tidak ada file</div>`
   }
-
-  // STORAGE INFO
- if (isAdmin) {
-  let info = document.getElementById("storageInfo")
-
-  if (!info) {
-    info = document.createElement("div")
-    info.id = "storageInfo"
-    info.className = "card"
-    document.querySelector(".container").prepend(info)
-  }
-
-  info.innerText =
-    "Total Storage: " + (total / (1024 * 1024)).toFixed(2) + " MB"
-}
 }
 
 // ======================
-// BACK BUTTON (HEADER)
+// BACK
 // ======================
 document.getElementById("backBtn").onclick = () => {
   if (!currentPath) return
@@ -160,7 +140,7 @@ window.downloadFile = function(url) {
 }
 
 // ======================
-// UPLOAD (ADMIN)
+// UPLOAD CLICK
 // ======================
 document.getElementById("uploadBtn")?.addEventListener("click", async () => {
   const files = document.getElementById("fileInput").files
@@ -202,7 +182,7 @@ function createUploadUI(name) {
 }
 
 // ======================
-// UPLOAD CORE
+// UPLOAD CORE (FIX FINAL)
 // ======================
 async function uploadFile(file, fill) {
   const folder = document.getElementById("folderInput")?.value.trim()
@@ -226,13 +206,23 @@ async function uploadFile(file, fill) {
 
   clearInterval(interval)
 
+  const parent = fill.parentElement.parentElement
+
   if (error) {
     fill.style.background = "red"
-    console.error(error)
+    parent.innerHTML += " ❌ Gagal"
     return
   }
 
+  // ✅ SUCCESS
   fill.style.width = "100%"
+  fill.style.background = "#22c55e"
+
+  parent.innerHTML += " ✔ Berhasil"
+
+  setTimeout(() => {
+    parent.remove()
+  }, 1500)
 }
 
 // ======================
@@ -244,7 +234,7 @@ window.deleteFile = async function(path) {
 }
 
 // ======================
-// DRAG & DROP (ADMIN)
+// DRAG DROP
 // ======================
 const dropZone = document.getElementById("dropZone")
 
