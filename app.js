@@ -18,25 +18,32 @@ let currentPath = ""
 window.addEventListener("DOMContentLoaded", () => {
 
   // ======================
-  // DARK MODE FIX
+  // DARK MODE (ADMIN ONLY)
   // ======================
   const themeBtn = document.getElementById("themeToggle")
 
   if (themeBtn) {
-    if (localStorage.getItem("theme") === "dark") {
-      document.body.classList.add("dark")
-      themeBtn.innerText = "☀️"
-    }
 
-    themeBtn.onclick = () => {
-      document.body.classList.toggle("dark")
+    if (!isAdmin) {
+      themeBtn.style.display = "none"
+      document.body.classList.remove("dark")
+    } else {
 
-      if (document.body.classList.contains("dark")) {
-        localStorage.setItem("theme", "dark")
+      if (localStorage.getItem("theme") === "dark") {
+        document.body.classList.add("dark")
         themeBtn.innerText = "☀️"
-      } else {
-        localStorage.setItem("theme", "light")
-        themeBtn.innerText = "🌙"
+      }
+
+      themeBtn.onclick = () => {
+        document.body.classList.toggle("dark")
+
+        if (document.body.classList.contains("dark")) {
+          localStorage.setItem("theme", "dark")
+          themeBtn.innerText = "☀️"
+        } else {
+          localStorage.setItem("theme", "light")
+          themeBtn.innerText = "🌙"
+        }
       }
     }
   }
@@ -109,6 +116,21 @@ window.addEventListener("DOMContentLoaded", () => {
 })
 
 // ======================
+// ICON (SESUAI REQUEST)
+// ======================
+function getFileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase()
+
+  if (["png","jpg","jpeg","gif"].includes(ext)) return "🖼️"
+  if (["pdf"].includes(ext)) return "📕"
+  if (["zip","rar"].includes(ext)) return "📦"
+  if (["mp4","mp3"].includes(ext)) return "🎬"
+  if (["html","js","css"].includes(ext)) return "📄"
+
+  return "📄"
+}
+
+// ======================
 // LOAD FILE
 // ======================
 async function loadFiles(path = "", search = "") {
@@ -141,7 +163,7 @@ async function loadFiles(path = "", search = "") {
 
       div.innerHTML = `
         <div class="file-left">
-          📄 <span>${item.name}</span>
+          ${getFileIcon(item.name)} <span>${item.name}</span>
         </div>
         <div>
           ${!isAdmin ? `<button onclick="downloadFile('${url.publicUrl}', '${item.name}')">⬇️</button>` : ""}
@@ -155,7 +177,7 @@ async function loadFiles(path = "", search = "") {
 }
 
 // ======================
-// DOWNLOAD
+// DOWNLOAD (FORCE)
 // ======================
 window.downloadFile = async function(url, filename) {
   const res = await fetch(url)
@@ -167,6 +189,8 @@ window.downloadFile = async function(url, filename) {
   link.click()
 }
 
+// ======================
+// UPLOAD UI
 // ======================
 function createUploadUI(name) {
   const list = document.getElementById("uploadList")
@@ -188,6 +212,8 @@ function createUploadUI(name) {
 }
 
 // ======================
+// UPLOAD CORE
+// ======================
 async function uploadFile(file, fill) {
   const path = currentPath + file.name
 
@@ -203,6 +229,8 @@ async function uploadFile(file, fill) {
   fill.style.width = "100%"
 }
 
+// ======================
+// DELETE
 // ======================
 window.deleteFile = async function(path) {
   await supabase.storage.from(BUCKET).remove([path])
