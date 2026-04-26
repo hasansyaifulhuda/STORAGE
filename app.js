@@ -7,17 +7,22 @@ const ADMIN_KEY = "123"
 const BUCKET = "files"
 
 // ======================
-// ROLE SYSTEM (NEW)
+// ROLE SYSTEM (FIX TOTAL)
 // ======================
-const path = window.location.pathname.toLowerCase()
 const params = new URLSearchParams(window.location.search)
 const key = params.get("key")
 
+// default = guest
 let isAdmin = false
 
-if (key === "123") {
+// hanya admin kalau KEY PERSIS
+if (key && key === ADMIN_KEY) {
   isAdmin = true
 }
+
+// DEBUG (boleh hapus nanti)
+console.log("KEY:", key)
+console.log("IS ADMIN:", isAdmin)
 
 // ======================
 // UI SETUP
@@ -62,7 +67,7 @@ async function uploadFile() {
   }
 
   alert("Upload berhasil")
-  loadFiles()
+  loadFiles(currentPath)
 }
 
 // ======================
@@ -127,9 +132,16 @@ document.getElementById("backBtn").onclick = () => {
 window.deleteFile = async function(path) {
   if (!isAdmin) return
 
-  await supabase.storage
+  if (!confirm("Hapus file ini?")) return
+
+  const { error } = await supabase.storage
     .from(BUCKET)
     .remove([path])
+
+  if (error) {
+    console.error(error)
+    return alert("Gagal hapus")
+  }
 
   loadFiles(currentPath)
 }
