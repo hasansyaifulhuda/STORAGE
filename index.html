@@ -14,8 +14,8 @@
 
 <div class="container">
 
-  <!-- ADMIN -->
-  <div class="card" id="adminPanel">
+  <!-- ADMIN ONLY -->
+  <div id="adminPanel" class="card">
     <input type="text" id="folderInput" placeholder="Folder (opsional)">
     <input type="file" id="fileInput" multiple>
     <button id="uploadBtn">Upload</button>
@@ -23,18 +23,12 @@
     <div id="dropZone" class="drop-zone">
       Drag & Drop file di sini
     </div>
+
+    <div id="uploadList"></div>
   </div>
 
   <!-- STORAGE INFO -->
-  <div class="card">
-    <b id="storageInfo"></b>
-  </div>
-
-  <!-- UPLOAD PROGRESS -->
-  <div class="card">
-    <h3>Upload Progress</h3>
-    <div id="uploadList"></div>
-  </div>
+  <div id="storageInfo" class="card"></div>
 
   <!-- FILE LIST -->
   <div class="card">
