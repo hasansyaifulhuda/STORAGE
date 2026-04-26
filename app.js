@@ -121,10 +121,19 @@ async function loadFiles(path = "", search = "") {
   }
 
   // STORAGE INFO
-  if (isAdmin) {
-    document.getElementById("storageInfo").innerText =
-      "Total Storage: " + (total / (1024 * 1024)).toFixed(2) + " MB"
+ if (isAdmin) {
+  let info = document.getElementById("storageInfo")
+
+  if (!info) {
+    info = document.createElement("div")
+    info.id = "storageInfo"
+    info.className = "card"
+    document.querySelector(".container").prepend(info)
   }
+
+  info.innerText =
+    "Total Storage: " + (total / (1024 * 1024)).toFixed(2) + " MB"
+}
 }
 
 // ======================
