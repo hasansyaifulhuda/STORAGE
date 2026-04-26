@@ -1,13 +1,12 @@
 import { supabase } from './supabaseClient.js'
 
 // ======================
-// ROLE (SUPER CEPAT)
+// ROLE
 // ======================
 const ADMIN_KEY = "123"
 const params = new URLSearchParams(window.location.search)
 const isAdmin = params.get("key") === ADMIN_KEY
 
-// 🔥 SET ROLE LANGSUNG (ANTI FLASH)
 document.body.classList.remove("guest")
 document.body.classList.add(isAdmin ? "admin" : "guest")
 
@@ -27,9 +26,12 @@ document.getElementById("searchInput").oninput = (e) => {
 // ======================
 function getFileIcon(name) {
   const ext = name.split('.').pop().toLowerCase()
+
   if (["png","jpg","jpeg"].includes(ext)) return "🖼️"
   if (["pdf"].includes(ext)) return "📕"
-  if (["zip"].includes(ext)) return "🗜️"
+  if (["zip","rar"].includes(ext)) return "🗜️"
+  if (["html","js","css"].includes(ext)) return "💻"
+
   return "📄"
 }
 
@@ -38,6 +40,13 @@ function getFileIcon(name) {
 // ======================
 async function loadFiles(path = "", search = "") {
   currentPath = path
+
+  // NAV PATH
+  document.getElementById("navPath").innerText = "/" + path
+
+  // BACK BUTTON
+  const backBtn = document.getElementById("backBtn")
+  backBtn.style.display = path ? "inline-block" : "none"
 
   const { data } = await supabase.storage.from(BUCKET).list(path)
 
@@ -54,10 +63,23 @@ async function loadFiles(path = "", search = "") {
 
     const isFolder = !item.metadata
 
+    // ======================
+    // FOLDER
+    // ======================
     if (isFolder) {
-      div.innerHTML = `📁 ${item.name}`
+      div.innerHTML = `
+        <div class="file-left">
+          📁 <b>${item.name}</b>
+        </div>
+      `
+
       div.onclick = () => loadFiles(path + item.name + "/")
-    } else {
+    }
+
+    // ======================
+    // FILE
+    // ======================
+    else {
       const size = item.metadata.size || 0
       total += size
 
@@ -69,12 +91,21 @@ async function loadFiles(path = "", search = "") {
 
       div.innerHTML = `
         <div class="file-left">
-          ${getFileIcon(item.name)} ${item.name}
+          ${getFileIcon(item.name)}
+          <span>${item.name}</span>
           <span class="file-size">${(size/1024).toFixed(1)} KB</span>
         </div>
+
         <div>
-          ${!isAdmin ? `<a href="${url.publicUrl}" download>⬇️</a>` : ""}
-          ${isAdmin ? `<button onclick="deleteFile('${fullPath}')">🗑️</button>` : ""}
+          ${!isAdmin ? `
+            <button class="icon-btn" onclick="downloadFile('${url.publicUrl}')">
+              ⬇️
+            </button>
+          ` : ""}
+
+          ${isAdmin ? `
+            <button onclick="deleteFile('${fullPath}')">🗑️</button>
+          ` : ""}
         </div>
       `
     }
@@ -90,6 +121,30 @@ async function loadFiles(path = "", search = "") {
     document.getElementById("storageInfo").innerText =
       "Total Storage: " + (total / (1024*1024)).toFixed(2) + " MB"
   }
+}
+
+// ======================
+// BACK
+// ======================
+document.getElementById("backBtn").onclick = () => {
+  if (!currentPath) return
+
+  const parts = currentPath.split("/").filter(Boolean)
+  parts.pop()
+
+  const newPath = parts.length ? parts.join("/") + "/" : ""
+
+  loadFiles(newPath)
+}
+
+// ======================
+// DOWNLOAD
+// ======================
+window.downloadFile = function(url) {
+  const a = document.createElement("a")
+  a.href = url
+  a.download = ""
+  a.click()
 }
 
 // ======================

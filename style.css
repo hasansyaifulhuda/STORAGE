@@ -95,3 +95,31 @@ button {
   width: 0%;
   background: #2563eb;
 }
+.nav-path {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.folder-item {
+  font-weight: 500;
+  color: #1e293b;
+  cursor: pointer;
+}
+
+.folder-item:hover {
+  background: #f1f5f9;
+  border-radius: 6px;
+  padding-left: 6px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.icon-btn:hover {
+  transform: scale(1.1);
+}
