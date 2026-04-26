@@ -8,17 +8,24 @@
 <body>
 
   <h1>📦 Web Storage</h1>
-
   <p id="roleText"></p>
 
+  <!-- ADMIN ONLY -->
   <div id="uploadSection">
+    <input type="text" id="folderInput" placeholder="Folder (opsional)">
+    <br><br>
     <input type="file" id="fileInput">
     <button id="uploadBtn">Upload</button>
   </div>
+
+  <hr>
+
+  <button id="backBtn" style="display:none;">⬅️ Back</button>
 
   <h2>Daftar File</h2>
   <ul id="fileList"></ul>
 
   <script type="module" src="app.js"></script>
 </body>
+</html>
 </html>

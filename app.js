@@ -1,26 +1,20 @@
 import { supabase } from './supabaseClient.js'
 
 // ======================
-// 🔐 CONFIG
+// CONFIG
 // ======================
 const ADMIN_KEY = "abc123XYZ"
 const BUCKET = "files"
 
 // ======================
-// 🔍 DETECT ROLE
+// ROLE
 // ======================
 const params = new URLSearchParams(window.location.search)
 const key = params.get("key")
-
-let isAdmin = false
-
-// ADMIN kalau key cocok
-if (key === ADMIN_KEY) {
-  isAdmin = true
-}
+const isAdmin = key === ADMIN_KEY
 
 // ======================
-// 🎛️ UI SETUP
+// UI SETUP
 // ======================
 const roleText = document.getElementById("roleText")
 const uploadSection = document.getElementById("uploadSection")
@@ -33,97 +27,108 @@ if (isAdmin) {
 }
 
 // ======================
-// 📤 UPLOAD FUNCTION
+// STATE
+// ======================
+let currentPath = ""
+
+// ======================
+// UPLOAD
 // ======================
 document.getElementById("uploadBtn")?.addEventListener("click", uploadFile)
 
 async function uploadFile() {
-  const fileInput = document.getElementById("fileInput")
-  const file = fileInput.files[0]
+  const file = document.getElementById("fileInput").files[0]
+  const folder = document.getElementById("folderInput").value.trim()
 
-  if (!file) return alert("Pilih file dulu!")
+  if (!file) return alert("Pilih file!")
 
-  // max 10MB
-  if (file.size > 10 * 1024 * 1024) {
-    return alert("Max file 10MB")
+  const path = folder
+    ? `${currentPath}${folder}/${file.name}`
+    : `${currentPath}${file.name}`
+
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, file, { upsert: true })
+
+  if (error) {
+    console.error(error)
+    return alert("Upload gagal")
   }
 
-  const fileName = Date.now() + "_" + file.name
-
-  try {
-    const { error } = await supabase.storage
-      .from(BUCKET)
-      .upload(fileName, file)
-
-    if (error) throw error
-
-    alert("Upload berhasil!")
-    loadFiles()
-
-  } catch (err) {
-    console.error(err)
-    alert("Upload gagal! Cek console.")
-  }
+  alert("Upload berhasil")
+  loadFiles()
 }
 
 // ======================
-// 📥 LOAD FILE LIST
+// LOAD FILES
 // ======================
-async function loadFiles() {
-  try {
-    const { data, error } = await supabase.storage
-      .from(BUCKET)
-      .list('', { limit: 100 })
+async function loadFiles(path = "") {
+  currentPath = path
 
-    if (error) throw error
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .list(path, { limit: 100 })
 
-    const list = document.getElementById("fileList")
-    list.innerHTML = ""
+  if (error) {
+    console.error(error)
+    return
+  }
 
-    data.forEach(file => {
+  const list = document.getElementById("fileList")
+  list.innerHTML = ""
+
+  document.getElementById("backBtn").style.display =
+    path ? "block" : "none"
+
+  data.forEach(item => {
+    const li = document.createElement("li")
+
+    if (item.id === null) {
+      // 📁 Folder
+      li.innerHTML = `📁 ${item.name}`
+      li.onclick = () => loadFiles(path + item.name + "/")
+    } else {
+      // 📄 File
+      const fullPath = path + item.name
+
       const { data: urlData } = supabase.storage
         .from(BUCKET)
-        .getPublicUrl(file.name)
-
-      const li = document.createElement("li")
+        .getPublicUrl(fullPath)
 
       li.innerHTML = `
-        <a href="${urlData.publicUrl}" target="_blank">${file.name}</a>
-        ${isAdmin ? `<button onclick="deleteFile('${file.name}')">🗑️</button>` : ""}
+        📄 <a href="${urlData.publicUrl}" target="_blank">${item.name}</a>
+        ${isAdmin ? `<button onclick="deleteFile('${fullPath}')">🗑️</button>` : ""}
       `
+    }
 
-      list.appendChild(li)
-    })
-
-  } catch (err) {
-    console.error(err)
-  }
+    list.appendChild(li)
+  })
 }
 
 // ======================
-// 🗑️ DELETE FILE (ADMIN)
+// BACK BUTTON
 // ======================
-window.deleteFile = async function(fileName) {
+document.getElementById("backBtn").onclick = () => {
+  const parts = currentPath.split("/").filter(Boolean)
+  parts.pop()
+  const newPath = parts.length ? parts.join("/") + "/" : ""
+  loadFiles(newPath)
+}
+
+// ======================
+// DELETE
+// ======================
+window.deleteFile = async function(path) {
   if (!isAdmin) return
 
-  if (!confirm("Hapus file ini?")) return
+  await supabase.storage
+    .from(BUCKET)
+    .remove([path])
 
-  try {
-    const { error } = await supabase.storage
-      .from(BUCKET)
-      .remove([fileName])
-
-    if (error) throw error
-
-    loadFiles()
-
-  } catch (err) {
-    console.error(err)
-    alert("Gagal hapus file")
-  }
+  loadFiles(currentPath)
 }
 
 // ======================
-// 🚀 INIT
+// INIT
 // ======================
 loadFiles()

@@ -1,22 +1,21 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   padding: 20px;
-  background: #f4f4f4;
-}
-
-h1 {
-  color: #333;
-}
-
-#uploadSection {
-  margin-bottom: 20px;
+  background: #f5f5f5;
 }
 
 button {
-  padding: 8px 15px;
+  padding: 6px 12px;
+  margin-top: 5px;
   cursor: pointer;
 }
 
 li {
   margin: 8px 0;
+  cursor: pointer;
+}
+
+a {
+  text-decoration: none;
+  color: blue;
 }
