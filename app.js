@@ -15,11 +15,35 @@ const BUCKET = "files"
 let currentPath = ""
 
 // ======================
-// DOM READY (PENTING)
-// ======================
 window.addEventListener("DOMContentLoaded", () => {
 
+  // ======================
+  // DARK MODE FIX
+  // ======================
+  const themeBtn = document.getElementById("themeToggle")
+
+  if (themeBtn) {
+    if (localStorage.getItem("theme") === "dark") {
+      document.body.classList.add("dark")
+      themeBtn.innerText = "☀️"
+    }
+
+    themeBtn.onclick = () => {
+      document.body.classList.toggle("dark")
+
+      if (document.body.classList.contains("dark")) {
+        localStorage.setItem("theme", "dark")
+        themeBtn.innerText = "☀️"
+      } else {
+        localStorage.setItem("theme", "light")
+        themeBtn.innerText = "🌙"
+      }
+    }
+  }
+
+  // ======================
   // SEARCH
+  // ======================
   const searchInput = document.getElementById("searchInput")
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -27,7 +51,9 @@ window.addEventListener("DOMContentLoaded", () => {
     })
   }
 
+  // ======================
   // BACK
+  // ======================
   const backBtn = document.getElementById("backBtn")
   if (backBtn) {
     backBtn.onclick = () => {
@@ -38,7 +64,9 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // UPLOAD (🔥 FIX UTAMA)
+  // ======================
+  // UPLOAD
+  // ======================
   const uploadBtn = document.getElementById("uploadBtn")
 
   if (uploadBtn) {
@@ -64,7 +92,9 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // ======================
   // DRAG DROP
+  // ======================
   const dropZone = document.getElementById("dropZone")
 
   if (dropZone) {
@@ -77,21 +107,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   loadFiles()
 })
-
-// ======================
-// ICON
-// ======================
-function getFileIcon(name) {
-  const ext = name.split('.').pop().toLowerCase()
-
- if (["png","jpg","jpeg","gif"].includes(ext)) return "🖼️"
-  if (["pdf"].includes(ext)) return "📕"
-  if (["zip","rar"].includes(ext)) return "📦"
-  if (["mp4","mp3"].includes(ext)) return "🎬"
-  if (["html","js","css"].includes(ext)) return "📄"
-
-  return "📄"
-}
 
 // ======================
 // LOAD FILE
@@ -126,11 +141,10 @@ async function loadFiles(path = "", search = "") {
 
       div.innerHTML = `
         <div class="file-left">
-          ${getFileIcon(item.name)}
-          <span>${item.name}</span>
+          📄 <span>${item.name}</span>
         </div>
         <div>
-          ${!isAdmin ? `<button onclick="downloadFile('${url.publicUrl}', '${item.name}')"> 📥</button>` : ""}
+          ${!isAdmin ? `<button onclick="downloadFile('${url.publicUrl}', '${item.name}')">⬇️</button>` : ""}
           ${isAdmin ? `<button onclick="deleteFile('${fullPath}')">🗑️</button>` : ""}
         </div>
       `
@@ -154,8 +168,6 @@ window.downloadFile = async function(url, filename) {
 }
 
 // ======================
-// UPLOAD UI
-// ======================
 function createUploadUI(name) {
   const list = document.getElementById("uploadList")
 
@@ -176,8 +188,6 @@ function createUploadUI(name) {
 }
 
 // ======================
-// UPLOAD CORE
-// ======================
 async function uploadFile(file, fill) {
   const path = currentPath + file.name
 
@@ -193,8 +203,6 @@ async function uploadFile(file, fill) {
   fill.style.width = "100%"
 }
 
-// ======================
-// DELETE
 // ======================
 window.deleteFile = async function(path) {
   await supabase.storage.from(BUCKET).remove([path])

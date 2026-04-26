@@ -130,7 +130,6 @@ button:hover {
 ====================== */
 .file-item {
   display: flex;
-  flex-direction: column;
   gap: 6px;
   padding: 10px;
   border-bottom: 1px solid var(--border);
@@ -285,4 +284,11 @@ input[type="file"] {
   #adminPanel button {
     width: 100% !important;
   }
+}
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
 }
