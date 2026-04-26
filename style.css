@@ -265,3 +265,24 @@ input[type="file"] {
     max-width: 260px;
   }
 }
+/* MOBILE FIX */
+@media (max-width: 600px) {
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header .right {
+    width: 100%;
+  }
+
+  .search {
+    width: 100%;
+  }
+
+  #adminPanel input,
+  #adminPanel button {
+    width: 100% !important;
+  }
+}
