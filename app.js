@@ -10,18 +10,13 @@ const BUCKET = "files"
 // 🔍 DETECT ROLE
 // ======================
 const params = new URLSearchParams(window.location.search)
-const role = params.get("role")
 const key = params.get("key")
 
 let isAdmin = false
 
-if (role === "admin" && key === ADMIN_KEY) {
+// ADMIN kalau key cocok
+if (key === ADMIN_KEY) {
   isAdmin = true
-}
-
-if (role !== "admin" && role !== "guest") {
-  document.body.innerHTML = "<h1>Akses tidak valid</h1>"
-  throw new Error("Invalid role")
 }
 
 // ======================
@@ -43,79 +38,89 @@ if (isAdmin) {
 document.getElementById("uploadBtn")?.addEventListener("click", uploadFile)
 
 async function uploadFile() {
-  const file = document.getElementById("fileInput").files[0]
+  const fileInput = document.getElementById("fileInput")
+  const file = fileInput.files[0]
+
   if (!file) return alert("Pilih file dulu!")
 
-  // limit 10MB
+  // max 10MB
   if (file.size > 10 * 1024 * 1024) {
-    return alert("Max 10MB")
+    return alert("Max file 10MB")
   }
 
   const fileName = Date.now() + "_" + file.name
 
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(fileName, file)
+  try {
+    const { error } = await supabase.storage
+      .from(BUCKET)
+      .upload(fileName, file)
 
-  if (error) {
-    console.error(error)
-    return alert("Upload gagal")
+    if (error) throw error
+
+    alert("Upload berhasil!")
+    loadFiles()
+
+  } catch (err) {
+    console.error(err)
+    alert("Upload gagal! Cek console.")
   }
-
-  alert("Upload berhasil!")
-  loadFiles()
 }
 
 // ======================
 // 📥 LOAD FILE LIST
 // ======================
 async function loadFiles() {
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .list('', { limit: 100 })
-
-  if (error) {
-    console.error(error)
-    return
-  }
-
-  const list = document.getElementById("fileList")
-  list.innerHTML = ""
-
-  data.forEach(file => {
-    const { data: urlData } = supabase.storage
+  try {
+    const { data, error } = await supabase.storage
       .from(BUCKET)
-      .getPublicUrl(file.name)
+      .list('', { limit: 100 })
 
-    const li = document.createElement("li")
+    if (error) throw error
 
-    li.innerHTML = `
-      <a href="${urlData.publicUrl}" target="_blank">${file.name}</a>
-      ${isAdmin ? `<button onclick="deleteFile('${file.name}')">🗑️</button>` : ""}
-    `
+    const list = document.getElementById("fileList")
+    list.innerHTML = ""
 
-    list.appendChild(li)
-  })
+    data.forEach(file => {
+      const { data: urlData } = supabase.storage
+        .from(BUCKET)
+        .getPublicUrl(file.name)
+
+      const li = document.createElement("li")
+
+      li.innerHTML = `
+        <a href="${urlData.publicUrl}" target="_blank">${file.name}</a>
+        ${isAdmin ? `<button onclick="deleteFile('${file.name}')">🗑️</button>` : ""}
+      `
+
+      list.appendChild(li)
+    })
+
+  } catch (err) {
+    console.error(err)
+  }
 }
 
 // ======================
-// 🗑️ DELETE (ADMIN ONLY)
+// 🗑️ DELETE FILE (ADMIN)
 // ======================
 window.deleteFile = async function(fileName) {
   if (!isAdmin) return
 
-  if (!confirm("Hapus file?")) return
+  if (!confirm("Hapus file ini?")) return
 
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .remove([fileName])
+  try {
+    const { error } = await supabase.storage
+      .from(BUCKET)
+      .remove([fileName])
 
-  if (error) {
-    console.error(error)
-    return alert("Gagal hapus")
+    if (error) throw error
+
+    loadFiles()
+
+  } catch (err) {
+    console.error(err)
+    alert("Gagal hapus file")
   }
-
-  loadFiles()
 }
 
 // ======================
