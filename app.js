@@ -170,7 +170,7 @@ async function loadFiles(path = "", search = "") {
           ${getFileIcon(item.name)} <span>${item.name}</span>
         </div>
         <div>
-          ${!isAdmin ? `<button onclick="downloadFile('${url.publicUrl}', '${item.name}')">⬇️</button>` : ""}
+          ${!isAdmin ? `<button onclick="downloadFile('${url.publicUrl}', '${item.name}')"> 📥</button>` : ""}
           ${isAdmin ? `<button onclick="deleteFile('${fullPath}')">🗑️</button>` : ""}
         </div>
       `
