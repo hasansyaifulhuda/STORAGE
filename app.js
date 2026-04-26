@@ -17,9 +17,8 @@ let currentPath = ""
 // ======================
 // SEARCH
 // ======================
-const searchInput = document.getElementById("searchInput")
-searchInput.addEventListener("input", () => {
-  loadFiles(currentPath, searchInput.value.toLowerCase())
+document.getElementById("searchInput").addEventListener("input", (e) => {
+  loadFiles(currentPath, e.target.value.toLowerCase())
 })
 
 // ======================
@@ -28,11 +27,11 @@ searchInput.addEventListener("input", () => {
 function getFileIcon(name) {
   const ext = name.split('.').pop().toLowerCase()
 
-  if (["png","jpg","jpeg","gif"].includes(ext)) return "🖼️"
+  if (["png","jpg","jpeg"].includes(ext)) return "🖼️"
   if (["pdf"].includes(ext)) return "📕"
-  if (["zip","rar"].includes(ext)) return "📦"
+  if (["zip","rar"].includes(ext)) return "🗜️"
   if (["mp4","mp3"].includes(ext)) return "🎬"
-  if (["html","js","css"].includes(ext)) return "📄"
+  if (["html","js","css"].includes(ext)) return "💻"
 
   return "📄"
 }
@@ -66,6 +65,7 @@ async function loadFiles(path = "", search = "") {
 
     const isFolder = !item.metadata
 
+    // ===== FOLDER =====
     if (isFolder) {
       div.innerHTML = `
         <div class="file-left">
@@ -73,7 +73,10 @@ async function loadFiles(path = "", search = "") {
         </div>
       `
       div.onclick = () => loadFiles(path + item.name + "/")
-    } else {
+    }
+
+    // ===== FILE =====
+    else {
       const size = item.metadata.size || 0
       total += size
 
@@ -92,7 +95,9 @@ async function loadFiles(path = "", search = "") {
 
         <div>
           ${!isAdmin ? `
-            <button class="icon-btn" onclick="downloadFile('${url.publicUrl}')">📥</button>
+            <button class="icon-btn" onclick="downloadFile('${url.publicUrl}', '${item.name}')">
+              ⬇️
+            </button>
           ` : ""}
 
           ${isAdmin ? `
@@ -110,7 +115,7 @@ async function loadFiles(path = "", search = "") {
   }
 
   // ======================
-  // TOTAL SIZE (ADMIN ONLY)
+  // TOTAL SIZE
   // ======================
   const totalEl = document.getElementById("totalSize")
 
@@ -136,13 +141,23 @@ document.getElementById("backBtn").onclick = () => {
 }
 
 // ======================
-// DOWNLOAD
+// 🔥 FORCE DOWNLOAD (ALL FILE TYPES)
 // ======================
-window.downloadFile = function(url) {
-  const a = document.createElement("a")
-  a.href = url
-  a.download = ""
-  a.click()
+window.downloadFile = async function(url, filename) {
+  try {
+    const res = await fetch(url)
+    const blob = await res.blob()
+
+    const link = document.createElement("a")
+    link.href = URL.createObjectURL(blob)
+    link.download = filename || "file"
+    link.click()
+
+    URL.revokeObjectURL(link.href)
+  } catch (err) {
+    console.error("Download gagal:", err)
+    alert("Gagal download file")
+  }
 }
 
 // ======================
@@ -201,7 +216,9 @@ async function uploadFile(file, fill) {
 
   const interval = setInterval(() => {
     progress += Math.random() * 10
-    if (progress < 90) fill.style.width = progress + "%"
+    if (progress < 90) {
+      fill.style.width = progress + "%"
+    }
   }, 200)
 
   const { error } = await supabase.storage
@@ -220,7 +237,6 @@ async function uploadFile(file, fill) {
 
   fill.style.width = "100%"
   fill.style.background = "#22c55e"
-
   parent.innerHTML += " ✔ Berhasil"
 
   setTimeout(() => {
