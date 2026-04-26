@@ -196,3 +196,55 @@ button:hover {
   font-size: 12px;
   color: var(--subtext);
 }
+/* ======================
+   FORCE DARK FIX
+====================== */
+
+/* semua input */
+input {
+  background: var(--card) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* file input khusus */
+input[type="file"] {
+  background: transparent !important;
+}
+
+/* upload panel */
+#adminPanel {
+  background: var(--card) !important;
+}
+
+/* drop zone */
+.drop-zone {
+  background: rgba(37,99,235,0.15) !important;
+  color: var(--text);
+}
+
+/* text "tidak ada file" */
+.card div {
+  color: var(--subtext);
+}
+
+/* button upload agar tidak putih */
+button {
+  background: var(--primary) !important;
+  color: white !important;
+}
+
+/* container biar tidak ada putih sisa */
+.container {
+  background: transparent !important;
+}
+
+/* file list card */
+#fileList {
+  color: var(--text);
+}
+/* glow effect halus */
+.card {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.03),
+              0 6px 20px rgba(0,0,0,0.4);
+}
