@@ -30,9 +30,9 @@ function getFileIcon(name) {
 
   if (["png","jpg","jpeg","gif"].includes(ext)) return "🖼️"
   if (["pdf"].includes(ext)) return "📕"
-  if (["zip","rar"].includes(ext)) return "🗜️"
+  if (["zip","rar"].includes(ext)) return "📦"
   if (["mp4","mp3"].includes(ext)) return "🎬"
-  if (["html","js","css"].includes(ext)) return "💻"
+  if (["html","js","css"].includes(ext)) return "📄"
 
   return "📄"
 }
