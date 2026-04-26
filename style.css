@@ -38,14 +38,15 @@ body {
 }
 
 /* ======================
-   HEADER
+   HEADER (RESPONSIVE)
 ====================== */
 .header {
   background: var(--card);
-  padding: 14px 20px;
+  padding: 12px;
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   align-items: center;
-  justify-content: space-between;
   border-bottom: 1px solid var(--border);
 }
 
@@ -62,8 +63,8 @@ body {
 
 .header .right {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 /* ======================
@@ -76,6 +77,8 @@ body {
   background: var(--card);
   color: var(--text);
   outline: none;
+  width: 100%;
+  max-width: 180px;
 }
 
 /* ======================
@@ -95,7 +98,6 @@ button:hover {
   opacity: 0.9;
 }
 
-/* BACK */
 #backBtn {
   background: #e2e8f0;
   color: #0f172a;
@@ -105,9 +107,8 @@ button:hover {
    CONTAINER
 ====================== */
 .container {
-  padding: 20px;
-  max-width: 900px;
-  margin: auto;
+  padding: 12px;
+  max-width: 100%;
 }
 
 /* ======================
@@ -115,21 +116,24 @@ button:hover {
 ====================== */
 .card {
   background: var(--card);
-  padding: 16px;
+  padding: 14px;
   border-radius: 12px;
   border: 1px solid var(--border);
   margin-bottom: 12px;
+
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.03),
+              0 6px 20px rgba(0,0,0,0.4);
 }
 
 /* ======================
-   FILE
+   FILE (RESPONSIVE)
 ====================== */
 .file-item {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 6px;
   padding: 10px;
   border-bottom: 1px solid var(--border);
-  transition: 0.2s;
 }
 
 .file-item:hover {
@@ -141,11 +145,18 @@ button:hover {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .file-size {
   font-size: 11px;
   color: var(--subtext);
+}
+
+/* tombol kanan */
+.file-item > div:last-child {
+  display: flex;
+  gap: 6px;
 }
 
 /* ======================
@@ -163,10 +174,10 @@ button:hover {
 ====================== */
 .drop-zone {
   border: 2px dashed var(--border);
-  padding: 20px;
+  padding: 16px;
   text-align: center;
   border-radius: 10px;
-  background: rgba(37,99,235,0.1);
+  background: rgba(37,99,235,0.15);
 }
 
 /* ======================
@@ -196,55 +207,61 @@ button:hover {
   font-size: 12px;
   color: var(--subtext);
 }
+
 /* ======================
    FORCE DARK FIX
 ====================== */
-
-/* semua input */
 input {
   background: var(--card) !important;
   color: var(--text) !important;
   border: 1px solid var(--border) !important;
 }
 
-/* file input khusus */
 input[type="file"] {
   background: transparent !important;
 }
 
-/* upload panel */
 #adminPanel {
   background: var(--card) !important;
 }
 
-/* drop zone */
-.drop-zone {
-  background: rgba(37,99,235,0.15) !important;
-  color: var(--text);
-}
-
-/* text "tidak ada file" */
-.card div {
-  color: var(--subtext);
-}
-
-/* button upload agar tidak putih */
-button {
-  background: var(--primary) !important;
-  color: white !important;
-}
-
-/* container biar tidak ada putih sisa */
 .container {
   background: transparent !important;
 }
 
-/* file list card */
 #fileList {
   color: var(--text);
 }
-/* glow effect halus */
-.card {
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.03),
-              0 6px 20px rgba(0,0,0,0.4);
+
+/* ======================
+   📱 TABLET
+====================== */
+@media (min-width: 600px) {
+  .container {
+    max-width: 700px;
+    margin: auto;
+  }
+
+  .file-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .search {
+    max-width: 220px;
+  }
+}
+
+/* ======================
+   💻 DESKTOP
+====================== */
+@media (min-width: 900px) {
+  .container {
+    max-width: 900px;
+  }
+
+  .search {
+    max-width: 260px;
+  }
 }
