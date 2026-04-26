@@ -11,38 +11,71 @@ document.body.classList.remove("guest")
 document.body.classList.add(isAdmin ? "admin" : "guest")
 
 // ======================
-// DARK MODE
-// ======================
-const themeBtn = document.getElementById("themeToggle")
-
-if (themeBtn) {
-  if (localStorage.getItem("theme") === "dark") {
-    document.body.classList.add("dark")
-    themeBtn.innerText = "☀️"
-  }
-
-  themeBtn.onclick = () => {
-    document.body.classList.toggle("dark")
-
-    if (document.body.classList.contains("dark")) {
-      localStorage.setItem("theme", "dark")
-      themeBtn.innerText = "☀️"
-    } else {
-      localStorage.setItem("theme", "light")
-      themeBtn.innerText = "🌙"
-    }
-  }
-}
-
-// ======================
 const BUCKET = "files"
 let currentPath = ""
 
 // ======================
-// SEARCH
+// DOM READY (PENTING)
 // ======================
-document.getElementById("searchInput").addEventListener("input", (e) => {
-  loadFiles(currentPath, e.target.value.toLowerCase())
+window.addEventListener("DOMContentLoaded", () => {
+
+  // SEARCH
+  const searchInput = document.getElementById("searchInput")
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      loadFiles(currentPath, e.target.value.toLowerCase())
+    })
+  }
+
+  // BACK
+  const backBtn = document.getElementById("backBtn")
+  if (backBtn) {
+    backBtn.onclick = () => {
+      const parts = currentPath.split("/").filter(Boolean)
+      parts.pop()
+      const newPath = parts.length ? parts.join("/") + "/" : ""
+      loadFiles(newPath)
+    }
+  }
+
+  // UPLOAD (🔥 FIX UTAMA)
+  const uploadBtn = document.getElementById("uploadBtn")
+
+  if (uploadBtn) {
+    uploadBtn.onclick = async () => {
+
+      const input = document.getElementById("fileInput")
+      const files = input?.files
+
+      if (!files || files.length === 0) {
+        alert("Pilih file dulu!")
+        return
+      }
+
+      const tasks = []
+
+      for (let file of files) {
+        const ui = createUploadUI(file.name)
+        tasks.push(uploadFile(file, ui))
+      }
+
+      await Promise.all(tasks)
+      loadFiles(currentPath)
+    }
+  }
+
+  // DRAG DROP
+  const dropZone = document.getElementById("dropZone")
+
+  if (dropZone) {
+    dropZone.ondrop = (e) => {
+      e.preventDefault()
+      handleDrop(e.dataTransfer.files)
+    }
+    dropZone.ondragover = (e) => e.preventDefault()
+  }
+
+  loadFiles()
 })
 
 // ======================
@@ -51,7 +84,7 @@ document.getElementById("searchInput").addEventListener("input", (e) => {
 function getFileIcon(name) {
   const ext = name.split('.').pop().toLowerCase()
 
-  if (["png","jpg","jpeg","gif"].includes(ext)) return "🖼️"
+ if (["png","jpg","jpeg","gif"].includes(ext)) return "🖼️"
   if (["pdf"].includes(ext)) return "📕"
   if (["zip","rar"].includes(ext)) return "📦"
   if (["mp4","mp3"].includes(ext)) return "🎬"
@@ -67,14 +100,14 @@ async function loadFiles(path = "", search = "") {
   currentPath = path
 
   const backBtn = document.getElementById("backBtn")
-  backBtn.style.display = path ? "inline-block" : "none"
+  if (backBtn) {
+    backBtn.style.display = path ? "inline-block" : "none"
+  }
 
   const { data } = await supabase.storage.from(BUCKET).list(path)
 
   const list = document.getElementById("fileList")
   list.innerHTML = ""
-
-  let total = 0
 
   data.forEach(item => {
     if (search && !item.name.toLowerCase().includes(search)) return
@@ -88,9 +121,6 @@ async function loadFiles(path = "", search = "") {
       div.innerHTML = `📁 <b>${item.name}</b>`
       div.onclick = () => loadFiles(path + item.name + "/")
     } else {
-      const size = item.metadata.size || 0
-      total += size
-
       const fullPath = path + item.name
       const { data: url } = supabase.storage.from(BUCKET).getPublicUrl(fullPath)
 
@@ -98,7 +128,6 @@ async function loadFiles(path = "", search = "") {
         <div class="file-left">
           ${getFileIcon(item.name)}
           <span>${item.name}</span>
-          <span class="file-size">${(size/1024).toFixed(1)} KB</span>
         </div>
         <div>
           ${!isAdmin ? `<button onclick="downloadFile('${url.publicUrl}', '${item.name}')"> 📥</button>` : ""}
@@ -109,32 +138,10 @@ async function loadFiles(path = "", search = "") {
 
     list.appendChild(div)
   })
-
-  if (list.innerHTML === "") {
-    list.innerHTML = `<div style="color:gray">Tidak ada file</div>`
-  }
-
-  const totalEl = document.getElementById("totalSize")
-  if (isAdmin) {
-    totalEl.style.display = "inline"
-    totalEl.innerText = (total / (1024 * 1024)).toFixed(2) + " MB"
-  } else {
-    totalEl.style.display = "none"
-  }
 }
 
 // ======================
-// BACK
-// ======================
-document.getElementById("backBtn").onclick = () => {
-  const parts = currentPath.split("/").filter(Boolean)
-  parts.pop()
-  const newPath = parts.length ? parts.join("/") + "/" : ""
-  loadFiles(newPath)
-}
-
-// ======================
-// DOWNLOAD (FORCE)
+// DOWNLOAD
 // ======================
 window.downloadFile = async function(url, filename) {
   const res = await fetch(url)
@@ -147,6 +154,46 @@ window.downloadFile = async function(url, filename) {
 }
 
 // ======================
+// UPLOAD UI
+// ======================
+function createUploadUI(name) {
+  const list = document.getElementById("uploadList")
+
+  const div = document.createElement("div")
+  div.innerText = name
+
+  const bar = document.createElement("div")
+  bar.className = "upload-bar"
+
+  const fill = document.createElement("div")
+  fill.className = "upload-fill"
+
+  bar.appendChild(fill)
+  div.appendChild(bar)
+  list.appendChild(div)
+
+  return fill
+}
+
+// ======================
+// UPLOAD CORE
+// ======================
+async function uploadFile(file, fill) {
+  const path = currentPath + file.name
+
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, file, { upsert: true })
+
+  if (error) {
+    fill.style.background = "red"
+    return
+  }
+
+  fill.style.width = "100%"
+}
+
+// ======================
 // DELETE
 // ======================
 window.deleteFile = async function(path) {
@@ -155,4 +202,14 @@ window.deleteFile = async function(path) {
 }
 
 // ======================
-loadFiles()
+async function handleDrop(files) {
+  const tasks = []
+
+  for (let file of files) {
+    const ui = createUploadUI(file.name)
+    tasks.push(uploadFile(file, ui))
+  }
+
+  await Promise.all(tasks)
+  loadFiles(currentPath)
+}
