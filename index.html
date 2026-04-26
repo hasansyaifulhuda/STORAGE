@@ -5,7 +5,9 @@
   <title>Web Storage</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+
+<!-- 🔥 DEFAULT = GUEST -->
+<body class="guest">
 
 <div class="header">
   <div class="title">☁️ Web Storage</div>
@@ -14,7 +16,7 @@
 
 <div class="container">
 
-  <!-- ADMIN ONLY -->
+  <!-- ADMIN -->
   <div id="adminPanel" class="card">
     <input type="text" id="folderInput" placeholder="Folder (opsional)">
     <input type="file" id="fileInput" multiple>
@@ -27,10 +29,10 @@
     <div id="uploadList"></div>
   </div>
 
-  <!-- STORAGE INFO -->
+  <!-- STORAGE -->
   <div id="storageInfo" class="card"></div>
 
-  <!-- FILE LIST -->
+  <!-- FILE -->
   <div class="card">
     <button id="backBtn" style="display:none;">⬅️ Back</button>
     <div id="fileList"></div>

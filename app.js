@@ -1,69 +1,45 @@
 import { supabase } from './supabaseClient.js'
 
 // ======================
-// CONFIG
+// ROLE (SUPER CEPAT)
 // ======================
 const ADMIN_KEY = "123"
-const BUCKET = "files"
-
-// ======================
-// ROLE
-// ======================
 const params = new URLSearchParams(window.location.search)
 const isAdmin = params.get("key") === ADMIN_KEY
 
-const adminPanel = document.getElementById("adminPanel")
-const storageInfo = document.getElementById("storageInfo")
-
-if (!isAdmin) {
-  adminPanel.style.display = "none"
-  storageInfo.style.display = "none"
-}
+// 🔥 SET ROLE LANGSUNG (ANTI FLASH)
+document.body.classList.remove("guest")
+document.body.classList.add(isAdmin ? "admin" : "guest")
 
 // ======================
-// STATE
-// ======================
+const BUCKET = "files"
 let currentPath = ""
 
 // ======================
-// SEARCH (FIX)
+// SEARCH
 // ======================
-const searchInput = document.getElementById("searchInput")
-
-searchInput.addEventListener("input", () => {
-  const keyword = searchInput.value.trim().toLowerCase()
-  loadFiles(currentPath, keyword)
-})
+document.getElementById("searchInput").oninput = (e) => {
+  loadFiles(currentPath, e.target.value.toLowerCase())
+}
 
 // ======================
-// ICON FILE
+// ICON
 // ======================
 function getFileIcon(name) {
   const ext = name.split('.').pop().toLowerCase()
-
-  if (["png","jpg","jpeg","gif"].includes(ext)) return "🖼️"
+  if (["png","jpg","jpeg"].includes(ext)) return "🖼️"
   if (["pdf"].includes(ext)) return "📕"
-  if (["zip","rar"].includes(ext)) return "🗜️"
-  if (["mp4","mp3"].includes(ext)) return "🎬"
-  if (["html","js","css"].includes(ext)) return "💻"
-
+  if (["zip"].includes(ext)) return "🗜️"
   return "📄"
 }
 
 // ======================
-// LOAD FILE (FIX SEARCH + FOLDER)
+// LOAD FILE
 // ======================
 async function loadFiles(path = "", search = "") {
   currentPath = path
 
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .list(path)
-
-  if (error) {
-    console.error(error)
-    return
-  }
+  const { data } = await supabase.storage.from(BUCKET).list(path)
 
   const list = document.getElementById("fileList")
   list.innerHTML = ""
@@ -71,27 +47,17 @@ async function loadFiles(path = "", search = "") {
   let total = 0
 
   data.forEach(item => {
-    const name = item.name.toLowerCase()
-
-    // 🔥 FIX SEARCH
-    if (search && !name.includes(search)) return
+    if (search && !item.name.toLowerCase().includes(search)) return
 
     const div = document.createElement("div")
     div.className = "file-item"
 
     const isFolder = !item.metadata
 
-    // ======================
-    // FOLDER
-    // ======================
     if (isFolder) {
-      div.innerHTML = `📁 <b>${item.name}</b>`
+      div.innerHTML = `📁 ${item.name}`
       div.onclick = () => loadFiles(path + item.name + "/")
-    } 
-    // ======================
-    // FILE
-    // ======================
-    else {
+    } else {
       const size = item.metadata.size || 0
       total += size
 
@@ -103,11 +69,9 @@ async function loadFiles(path = "", search = "") {
 
       div.innerHTML = `
         <div class="file-left">
-          ${getFileIcon(item.name)}
-          <span>${item.name}</span>
+          ${getFileIcon(item.name)} ${item.name}
           <span class="file-size">${(size/1024).toFixed(1)} KB</span>
         </div>
-
         <div>
           ${!isAdmin ? `<a href="${url.publicUrl}" download>⬇️</a>` : ""}
           ${isAdmin ? `<button onclick="deleteFile('${fullPath}')">🗑️</button>` : ""}
@@ -118,30 +82,21 @@ async function loadFiles(path = "", search = "") {
     list.appendChild(div)
   })
 
-  // ======================
-  // EMPTY STATE
-  // ======================
   if (list.innerHTML === "") {
     list.innerHTML = `<div style="color:gray">Tidak ada file</div>`
   }
 
-  // ======================
-  // TOTAL STORAGE
-  // ======================
   if (isAdmin) {
-    storageInfo.innerText =
+    document.getElementById("storageInfo").innerText =
       "Total Storage: " + (total / (1024*1024)).toFixed(2) + " MB"
   }
 }
 
 // ======================
-// MULTI UPLOAD + PROGRESS
+// UPLOAD
 // ======================
 document.getElementById("uploadBtn").onclick = async () => {
   const files = document.getElementById("fileInput").files
-
-  if (!files.length) return alert("Pilih file dulu!")
-
   const tasks = []
 
   for (let file of files) {
@@ -150,7 +105,6 @@ document.getElementById("uploadBtn").onclick = async () => {
   }
 
   await Promise.all(tasks)
-
   loadFiles(currentPath)
 }
 
@@ -163,9 +117,6 @@ function createUploadUI(name) {
   const div = document.createElement("div")
   div.className = "upload-item"
 
-  const title = document.createElement("div")
-  title.innerText = name
-
   const bar = document.createElement("div")
   bar.className = "upload-bar"
 
@@ -173,7 +124,7 @@ function createUploadUI(name) {
   fill.className = "upload-fill"
 
   bar.appendChild(fill)
-  div.appendChild(title)
+  div.innerText = name
   div.appendChild(bar)
 
   list.appendChild(div)
@@ -182,7 +133,7 @@ function createUploadUI(name) {
 }
 
 // ======================
-// UPLOAD CORE (PROGRESS FIX)
+// UPLOAD CORE
 // ======================
 async function uploadFile(file, fill) {
   const folder = document.getElementById("folderInput").value.trim()
@@ -194,24 +145,13 @@ async function uploadFile(file, fill) {
   let progress = 0
 
   const interval = setInterval(() => {
-    progress += Math.random() * 12
-    if (progress < 90) {
-      fill.style.width = progress + "%"
-    }
+    progress += Math.random() * 10
+    if (progress < 90) fill.style.width = progress + "%"
   }, 200)
 
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, file, { upsert: true })
+  await supabase.storage.from(BUCKET).upload(path, file, { upsert: true })
 
   clearInterval(interval)
-
-  if (error) {
-    fill.style.background = "red"
-    console.error(error)
-    return
-  }
-
   fill.style.width = "100%"
 }
 
@@ -224,7 +164,7 @@ window.deleteFile = async function(path) {
 }
 
 // ======================
-// DRAG & DROP
+// DRAG DROP
 // ======================
 const dropZone = document.getElementById("dropZone")
 
@@ -244,11 +184,8 @@ async function handleDrop(files) {
   }
 
   await Promise.all(tasks)
-
   loadFiles(currentPath)
 }
 
-// ======================
-// INIT
 // ======================
 loadFiles()
