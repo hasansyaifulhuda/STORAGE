@@ -25,9 +25,13 @@ window.addEventListener("DOMContentLoaded", () => {
   if (themeBtn) {
 
     if (!isAdmin) {
-      themeBtn.style.display = "none"
-      document.body.classList.remove("dark")
-    } else {
+  themeBtn.style.display = "none"
+
+  // tetap pakai preferensi terakhir
+  if (localStorage.getItem("theme") === "dark") {
+    document.body.classList.add("dark")
+  }
+} else {
 
       if (localStorage.getItem("theme") === "dark") {
         document.body.classList.add("dark")
