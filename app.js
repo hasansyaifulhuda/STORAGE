@@ -7,20 +7,26 @@ const ADMIN_KEY = "123"
 const BUCKET = "files"
 
 // ======================
-// ROLE SYSTEM (FIX TOTAL)
+// ROLE SYSTEM (FINAL FIX)
 // ======================
-const params = new URLSearchParams(window.location.search)
-const key = params.get("key")
+const url = new URL(window.location.href)
+const key = url.searchParams.get("key")
 
-// default = guest
 let isAdmin = false
 
-// hanya admin kalau KEY PERSIS
-if (key && key === ADMIN_KEY) {
+// hanya admin kalau key EXACT
+if (key === ADMIN_KEY) {
   isAdmin = true
+} else {
+  // hapus key kalau tidak valid / biar tidak nyangkut
+  if (url.searchParams.has("key")) {
+    url.searchParams.delete("key")
+    window.history.replaceState({}, '', url.pathname)
+  }
 }
 
-// DEBUG (boleh hapus nanti)
+// DEBUG (optional)
+console.log("URL:", window.location.href)
 console.log("KEY:", key)
 console.log("IS ADMIN:", isAdmin)
 
